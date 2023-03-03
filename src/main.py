@@ -88,6 +88,7 @@ def load_config() -> dict:
 
 if __name__ == "__main__":
     configs = load_config()
+    web.login(configs["host"], configs["name"], configs["id"])
     manager = ClipboardManager(configs["name"], configs["id"], configs["host"])
 
     manager.start()
