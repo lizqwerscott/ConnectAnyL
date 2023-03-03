@@ -1,0 +1,32 @@
+[project]
+name = "ConnectAnyL"
+version = "0.1.0"
+description = "ConnectAny Linux version"
+authors = [
+    {name = "lizqwerscott", email = "lizqwerscott@163.com"},
+]
+dependencies = [
+    "requests>=2.28.2",
+    "pyperclip>=1.8.2",
+    "websocket-client>=1.5.1",
+]
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-pep517>=1.0"]
+build-backend = "pdm.pep517.api"
+
+[tool.pdm.scripts]
+start = "python src/main.py"
+
+[tool.pyright]
+include = ["src"]
+exclude = ["**/node_modules",
+    "**/__pycache__",
+    "src/experimental",
+    "src/typestubs"
+]
+extraPaths = ["__pypackages__/3.10/lib/"]
+stubPath = "stubs"
