@@ -7,7 +7,7 @@ logging.basicConfig(
 )
 
 
-def web_post(default_host: str, command: str, data) -> dict | None:
+def web_post(default_host: str, command: str, data):
     url = "http://{}:8686{}".format(default_host, command)
     # url = "{}{}".format(default_host, command)
     res = None

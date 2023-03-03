@@ -17,8 +17,18 @@ ConnectAny Linux version
 pdm install
 ```
 
+或者可以使用requirements.txt安装
+```bash
+pip install -r requirements.txt
+```
+
 ## Run
 
 ```bash
 pdm run start
+```
+
+如果没使用pdm安装
+```bash
+python src/main.py
 ```
