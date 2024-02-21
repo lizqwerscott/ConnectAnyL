@@ -90,8 +90,11 @@ def load_config() -> dict:
 if __name__ == "__main__":
     configs = load_config()
     print(configs)
-    web.login(configs["host"], configs["server_port"], configs["name"], configs["id"])
-    manager = ClipboardManager(configs["name"], configs["id"], configs["host"], configs["server_port"], configs["ws_port"])
-
-    manager.start()
-    manager.run_ws()
+    res = web.login(configs["host"], configs["server_port"], configs["name"], configs["id"])
+    if res:
+        manager = ClipboardManager(configs["name"], configs["id"], configs["host"], configs["server_port"], configs["ws_port"])
+        manager.start()
+        manager.run_ws()
+    else:
+        logging.error("login failed")
+        exit(1)
