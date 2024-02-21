@@ -8,7 +8,7 @@ logging.basicConfig(
 
 
 def web_post(default_host: str, command: str, data):
-    url = "http://{}:8686{}".format(default_host, command)
+    url = "http://{}{}".format(default_host, command)
     # url = "{}{}".format(default_host, command)
     res = None
     try:
@@ -38,22 +38,22 @@ def generate_clipboard_data(data: str) -> dict:
     return {"type": "text", "data": data, "date": "114514"}
 
 
-def login(default_host: str, user_name: str, device_id: str) -> bool:
+def login(default_host: str, server_port: int, user_name: str, device_id: str) -> bool:
     body = {}
     body["device"] = generate_device(device_id)
     body["name"] = user_name
-    res = handle_res(web_post(default_host, "/user/adduser", body))
+    res = handle_res(web_post("{}:{}".format(default_host, server_port), "/user/adduser", body))
     if res != None:
         return res
     else:
         return False
 
 
-def add_clipboard_message(default_host: str, device_id: str, clipboard: str) -> bool:
+def add_clipboard_message(default_host: str, server_port: int, device_id: str, clipboard: str) -> bool:
     body = {}
     body["device"] = generate_device(device_id)
     body["message"] = generate_clipboard_data(clipboard)
-    res = handle_res(web_post(default_host, "/message/addmessage", body))
+    res = handle_res(web_post("{}:{}".format(default_host, server_port), "/message/addmessage", body))
     if res != None:
         return res
     else:
