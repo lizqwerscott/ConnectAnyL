@@ -1,6 +1,7 @@
 import requests
 import socket
 import logging
+import time
 
 logging.basicConfig(
     format="[%(asctime)s] [%(levelname)s]: %(message)s", level=logging.INFO
@@ -29,18 +30,20 @@ def handle_res(res):
             )
     return None
 
+def generate_input_device() -> dict:
+    return {"type": "Linux", "name": socket.gethostname()}
 
-def generate_device(device_id: str) -> dict:
-    return {"id": device_id, "type": "Linux", "name": socket.gethostname()}
+def generate_device() -> dict:
+    return {"type": "Linux", "name": socket.gethostname(), "notification": ""}
 
 
 def generate_clipboard_data(data: str) -> dict:
-    return {"type": "text", "data": data, "date": "114514"}
+    return {"type": "text", "data": data, "date": int(round(time.time() * 1000))}
 
 
-def login(default_host: str, server_port: int, user_name: str, device_id: str) -> bool:
+def login(default_host: str, server_port: int, user_name: str) -> bool:
     body = {}
-    body["device"] = generate_device(device_id)
+    body["device"] = generate_device()
     body["name"] = user_name
     res = handle_res(web_post("{}:{}".format(default_host, server_port), "/user/adduser", body))
     if res != None:
@@ -49,9 +52,9 @@ def login(default_host: str, server_port: int, user_name: str, device_id: str) -
         return False
 
 
-def add_clipboard_message(default_host: str, server_port: int, device_id: str, clipboard: str) -> bool:
+def add_clipboard_message(default_host: str, server_port: int, clipboard: str) -> bool:
     body = {}
-    body["device"] = generate_device(device_id)
+    body["device"] = generate_device()
     body["message"] = generate_clipboard_data(clipboard)
     res = handle_res(web_post("{}:{}".format(default_host, server_port), "/message/addmessage", body))
     if res != None:

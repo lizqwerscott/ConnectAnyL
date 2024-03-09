@@ -11,7 +11,7 @@ import uuid
 
 
 class ClipboardManager(threading.Thread):
-    def __init__(self, name: str, device_id: str, default_host: str, server_port: int, ws_port: int) -> None:
+    def __init__(self, name: str, default_host: str, server_port: int) -> None:
         threading.Thread.__init__(self)
         self.threadId = "1"
         self.name = "1"
@@ -19,12 +19,11 @@ class ClipboardManager(threading.Thread):
         self.clipboard_data = pyperclip.paste()
 
         self.user_name = name
-        self.device_id = device_id
         self.default_host = default_host
         self.server_port = server_port
 
         self.ws = websocket.WebSocketApp(
-            "ws://{}:{}/clipboard".format(default_host, ws_port),
+            "ws://{}:{}/ws".format(default_host, server_port),
             on_open=self.on_open,
             on_close=self.on_close,
             on_error=self.on_error,
@@ -33,7 +32,7 @@ class ClipboardManager(threading.Thread):
 
     def on_message(self, ws, message):
         clipboard = json.loads(message)
-        if clipboard["type"] == "text":
+        if clipboard["type"] == "Text":
             self.clipboard_data = clipboard["data"]
             pyperclip.copy(self.clipboard_data)
         print(message)
@@ -47,7 +46,7 @@ class ClipboardManager(threading.Thread):
     def on_open(self, ws):
         logging.info("ws open connection")
         body = {}
-        body["device"] = web.generate_device(self.device_id)
+        body["device"] = web.generate_input_device()
         body["type"] = "init"
         ws.send(json.dumps(body))
 
@@ -62,19 +61,19 @@ class ClipboardManager(threading.Thread):
                 # 添加新剪切板
                 self.clipboard_data = clipboard_data
                 web.add_clipboard_message(
-                    self.default_host, self.server_port, self.device_id, self.clipboard_data
+                    self.default_host, self.server_port, self.clipboard_data
                 )
             sleep(1)
         print("结束")
 
 def load_config() -> dict:
-    default_path = Path("~/.connect-any-l/config/").expanduser()
+    default_path = Path("./config/")
     if not os.path.exists(default_path):
         os.makedirs(default_path)
 
     config_path = os.path.join(default_path, "config.json")
 
-    configs = { "name": "", "id": str(uuid.uuid1()), "host": "127.0.0.1", "server_port": 22010, "ws_port": 8685 }
+    configs = { "name": "", "host": "127.0.0.1", "server_port": 22010 }
 
     if not os.path.exists(config_path):
         name = input("Please input name:")
@@ -90,9 +89,9 @@ def load_config() -> dict:
 if __name__ == "__main__":
     configs = load_config()
     print(configs)
-    res = web.login(configs["host"], configs["server_port"], configs["name"], configs["id"])
+    res = web.login(configs["host"], configs["server_port"], configs["name"])
     if res:
-        manager = ClipboardManager(configs["name"], configs["id"], configs["host"], configs["server_port"], configs["ws_port"])
+        manager = ClipboardManager(configs["name"], configs["host"], configs["server_port"])
         manager.start()
         manager.run_ws()
     else:
