@@ -38,7 +38,7 @@ def generate_device() -> dict:
 
 
 def generate_clipboard_data(data: str) -> dict:
-    return {"type": "text", "data": data, "date": int(round(time.time() * 1000))}
+    return {"type": "Text", "data": data, "date": int(round(time.time() * 1000))}
 
 
 def login(default_host: str, server_port: int, user_name: str) -> bool:
