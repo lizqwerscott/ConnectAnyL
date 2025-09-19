@@ -1,13 +1,14 @@
-from time import sleep
-import pyperclip
-import threading
-import websocket
-import web
-import logging
 import json
+import logging
 import os
+import threading
 from pathlib import Path
-import uuid
+from time import sleep
+
+import websocket
+
+import web
+from clipboard import ClipboardData, get_clipboard_data, set_clipboard_data
 
 
 class ClipboardManager(threading.Thread):
@@ -16,7 +17,7 @@ class ClipboardManager(threading.Thread):
         self.threadId = "1"
         self.name = "1"
         self.delay = 1
-        self.clipboard_data = pyperclip.paste()
+        self.clipboard_data = get_clipboard_data()
 
         self.user_name = name
         self.default_host = default_host
@@ -33,9 +34,13 @@ class ClipboardManager(threading.Thread):
     def on_message(self, ws, message):
         clipboard = json.loads(message)
         if clipboard["type"] == "Text":
-            self.clipboard_data = clipboard["data"]
-            pyperclip.copy(self.clipboard_data)
-        print(message)
+            self.clipboard_data = ClipboardData("Text", clipboard["data"])
+            print(message)
+        elif clipboard["type"] == "Image":
+            self.clipboard_data = ClipboardData("Image", clipboard["data"])
+            print("image")
+        if self.clipboard_data is not None:
+            set_clipboard_data(self.clipboard_data)
 
     def on_error(self, ws, error):
         logging.error("ws error: {}".format(error))
@@ -56,15 +61,27 @@ class ClipboardManager(threading.Thread):
     def run(self):
         print("开始")
         while True:
-            clipboard_data = pyperclip.paste()
-            if clipboard_data != "" and clipboard_data != self.clipboard_data:
-                # 添加新剪切板
-                self.clipboard_data = clipboard_data
-                web.add_clipboard_message(
-                    self.default_host, self.server_port, self.clipboard_data
-                )
+            clipboard_data = get_clipboard_data()
+            if clipboard_data is not None and not clipboard_data.empty():
+                if self.clipboard_data is not None:
+                    if (
+                        clipboard_data.type != self.clipboard_data.type
+                        or clipboard_data.data != self.clipboard_data.data
+                    ):
+                        # 添加新剪切板
+                        self.clipboard_data = clipboard_data
+                        web.add_clipboard_message(
+                            self.default_host, self.server_port, self.clipboard_data
+                        )
+                else:
+                    # 添加新剪切板
+                    self.clipboard_data = clipboard_data
+                    web.add_clipboard_message(
+                        self.default_host, self.server_port, self.clipboard_data
+                    )
+
             sleep(1)
-        print("结束")
+
 
 def load_config() -> dict:
     default_path = Path("./config/")
@@ -73,7 +90,7 @@ def load_config() -> dict:
 
     config_path = os.path.join(default_path, "config.json")
 
-    configs = { "name": "", "host": "127.0.0.1", "server_port": 22010 }
+    configs = {"name": "", "host": "127.0.0.1", "server_port": 22010}
 
     if not os.path.exists(config_path):
         name = input("Please input name:")
@@ -86,14 +103,21 @@ def load_config() -> dict:
 
     return configs
 
-if __name__ == "__main__":
+
+def main():
     configs = load_config()
-    print(configs)
+
     res = web.login(configs["host"], configs["server_port"], configs["name"])
     if res:
-        manager = ClipboardManager(configs["name"], configs["host"], configs["server_port"])
+        manager = ClipboardManager(
+            configs["name"], configs["host"], configs["server_port"]
+        )
         manager.start()
         manager.run_ws()
     else:
         logging.error("login failed")
         exit(1)
+
+
+if __name__ == "__main__":
+    main()
