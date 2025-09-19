@@ -1,14 +1,27 @@
 import json
 import logging
-import os
 import threading
 from pathlib import Path
 from time import sleep
+from typing import TypedDict
 
 import websocket
 
 import web
 from clipboard import ClipboardData, get_clipboard_data, set_clipboard_data
+
+
+class Config(TypedDict):
+    name: str
+    host: str
+    server_port: int
+
+
+DEFAULT_CONFIG: Config = {
+    "name": "",
+    "host": "127.0.0.1",
+    "server_port": 22010,
+}
 
 
 class ClipboardManager(threading.Thread):
@@ -83,25 +96,33 @@ class ClipboardManager(threading.Thread):
             sleep(1)
 
 
-def load_config() -> dict:
-    default_path = Path("./config/")
-    if not os.path.exists(default_path):
-        os.makedirs(default_path)
+def load_config() -> Config:
+    config_dir = Path("./config/")
+    config_dir.mkdir(parents=True, exist_ok=True)
 
-    config_path = os.path.join(default_path, "config.json")
+    config_path = config_dir / "config.json"
 
-    configs = {"name": "", "host": "127.0.0.1", "server_port": 22010}
-
-    if not os.path.exists(config_path):
-        name = input("Please input name:")
-        configs["name"] = name
-        with open(config_path, "w") as f:
-            json.dump(configs, f)
+    config = DEFAULT_CONFIG.copy()
+    if not config_path.exists():
+        name = input("Please input name: ")
+        config = DEFAULT_CONFIG.copy()
+        config["name"] = name
+        _ = config_path.write_text(json.dumps(config, indent=2))
     else:
-        with open(config_path, "r") as f:
-            configs = json.load(f)
+        with config_path.open("r", encoding="utf-8") as f:
+            loaded: dict[str, object] = json.load(f)
 
-    return configs
+        config["name"] = str(loaded.get("name", DEFAULT_CONFIG["name"]))
+        config["host"] = str(loaded.get("host", DEFAULT_CONFIG["host"]))
+
+        server_port = loaded.get("server_port", DEFAULT_CONFIG["server_port"])
+        try:
+            config["server_port"] = int(str(server_port))
+        except (TypeError, ValueError):
+            # 如果无法转为 int，使用默认值
+            config["server_port"] = DEFAULT_CONFIG["server_port"]
+
+    return config
 
 
 def main():

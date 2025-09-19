@@ -34,15 +34,15 @@ def handle_res(res):
     return None
 
 
-def generate_input_device() -> dict:
+def generate_input_device():
     return {"type": "Linux", "name": socket.gethostname()}
 
 
-def generate_device() -> dict:
+def generate_device():
     return {"type": "Linux", "name": socket.gethostname(), "notification": ""}
 
 
-def generate_clipboard_data(data: ClipboardData) -> dict:
+def generate_clipboard_data(data: ClipboardData):
     return {
         "type": data.type,
         "data": data.data,
